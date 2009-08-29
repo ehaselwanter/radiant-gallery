@@ -17,7 +17,7 @@ class GalleryItem < ActiveRecord::Base
   has_attachment :storage => Radiant::Config["gallery.storage"].to_sym,
     :path_prefix => Radiant::Config["gallery.path_prefix"],
     :processor => Radiant::Config["gallery.processor"],
-    :max_size => Radiant::Config["gallery.max_size"].to_i.kilobytes     
+    :max_size => Radiant::Config["gallery.max_size"].to_i.kilobytes
   
   belongs_to :gallery
   

@@ -52,7 +52,7 @@ module GalleryPageExtensions
     <pre><code><r:gallery:if_current_keywords>....</r:gallery:if_current_keywords></code></pre>
     Check to see if keywords are available in the parameters of the request URI
   }
-  tag 'gallery:if_current_keywords' do |tag|    
+  tag 'gallery:if_current_keywords' do |tag|
     tag.expand if tag.globals.page.request.parameters['keywords']
   end  
   
