@@ -48,30 +48,6 @@ module GalleryItemTags
       options[:conditions].merge!({"gallery_keywords.keyword" => keywords}) if keywords.length > 0              
     end
     
-    if !tag.attr['keywords'].nil? || !tag.attr['current_keywords'].nil?                                                                                                                                  
-      keywords = !tag.attr['keywords'].nil? ? tag.attr['keywords'].split(',') : []
-      if (tag.attr['current_keywords'] == 'is' || tag.attr['current_keywords'] == 'is_not') && !tag.globals.page.request.parameters['keywords'].nil?
-        @current_keywords = tag.globals.page.request.parameters['keywords'].split(',') if !tag.globals.page.request.parameters['keywords'].nil?
-        if !@current_keywords.nil? && @current_keywords.length > 0
-          keywords.concat(@current_keywords)
-        end
-      end
-      options[:joins] = :gallery_keywords
-      options[:conditions].merge!({"gallery_keywords.keyword" => keywords}) if keywords.length > 0              
-    end
-    
-    if !tag.attr['keywords'].nil? || !tag.attr['current_keywords'].nil?                                                                                                                                  
-      keywords = !tag.attr['keywords'].nil? ? tag.attr['keywords'].split(',') : []
-      if (tag.attr['current_keywords'] == 'is' || tag.attr['current_keywords'] == 'is_not') && !tag.globals.page.request.parameters['keywords'].nil?
-        @current_keywords = tag.globals.page.request.parameters['keywords'].split(',') if !tag.globals.page.request.parameters['keywords'].nil?
-        if !@current_keywords.nil? && @current_keywords.length > 0
-          keywords.concat(@current_keywords)
-        end
-      end
-      options[:joins] = :gallery_keywords
-      options[:conditions].merge!({"gallery_keywords.keyword" => keywords}) if keywords.length > 0              
-    end
-    
     @page_number = tag.globals.page.request.params["page"] && tag.globals.page.request.params["page"].first.to_i > 1 ? tag.globals.page.request.params["page"].first.to_i : 1
     if !tag.attr['limit'].nil? && tag.attr['offset'].nil?
       options[:offset] = tag.attr['limit'].to_i * (@page_number - 1)      
@@ -85,7 +61,10 @@ module GalleryItemTags
         gallery ? gallery.items.find(:all, options) : []
       when 'all'
         GalleryItem.find(:all, options)
-    end    
+    end
+    if tag.attr["exclude"]
+      options[:conditions].merge({"#{GalleryItem.table_name}.parent_id" => "NOT #{tag.attr["exclude"]}"})
+    end
     items.each do |item| 
       tag.locals.item = item
       content << tag.expand
@@ -123,11 +102,8 @@ module GalleryItemTags
     <pre><code><r:gallery:item:name [safe='true']/></code></pre>
     Provides name for current gallery item, safe is to make safe for web }
   tag "gallery:item:name" do |tag|      
-    item = find_item(tag)     
-    if tag.attr['safe']
-      item.name = item.name.gsub(/[\s]+/, '_').downcase
-    end
-    item.name
+    item = find_item(tag)
+    name = tag.attr['safe'] ? item.name.downcase.gsub(/[\s~\.:;+=]+/, '_') : item.name
   end 
   
   desc %{
@@ -138,8 +114,7 @@ module GalleryItemTags
   tag "gallery:item:keywords" do |tag|      
     item = find_item(tag)    
     joiner = tag.attr['separator'] ? tag.attr['separator'] : ' '  
-    keys = item.keywords
-    keys = keys.gsub(/[\s]+/, '_').downcase if (tag.attr['safe'])
+    keys = tag.attr['safe'] ? item.keywords.downcase.gsub(/[\s~\.:;+=]+/, '_') : item.keywords
     keys.gsub(/\,/, joiner);
   end 
   

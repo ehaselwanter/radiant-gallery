@@ -74,7 +74,7 @@ module GalleryTags
     Selects current gallery }
   tag "gallery" do |tag|
     tag.locals.gallery = find_gallery(tag)
-    tag.expand
+    tag.expand unless tag.locals.gallery.nil? && tag.attr['fail_silently']
   end
   
   tag 'gallery:if_current' do |tag|    
@@ -88,18 +88,6 @@ module GalleryTags
   tag 'gallery:current' do |tag|    
     tag.locals.item = @current_gallery
     tag.expand
-  end
-
-  tag 'gallery:if_current_keywords' do |tag|    
-    tag.expand if @current_keyword
-  end  
-  
-  tag 'gallery:unless_current_keywords' do |tag|    
-    tag.expand unless @current_keyword
-  end
-  
-  tag 'gallery:current_keywords' do |tag|    
-    @current_keyword
   end
   
   desc %{    
@@ -170,114 +158,6 @@ module GalleryTags
     text = tag.double? ? tag.expand : tag.render('name')  
     gallery_url = File.join(tag.render('url'))
     %{<a href="#{gallery_url[0..-2]}?keywords=#{keyword.gsub(/[\s~\.:;+=]+/, '_')}"#{attributes}>#{keyword}</a>}
-  end
-  
-  desc %{                 
-    Usage:
-    <pre><code><r:gallery:keywords [separator=',' safe='true']/></code></pre>
-    Provides keywords for current and children galleries, use
-    separator="separator_string" to specify the character between keywords }
-  tag "gallery:keywords" do |tag|
-    gallery = tag.locals.gallery    
-    joiner = tag.attr['separator'] ? tag.attr['separator'] : ' ' 
-    keys = gallery.keywords
-    keys = keys.gsub(/[\s]+/, '_').downcase if (tag.attr['safe'])
-    keys.gsub(/\,/, joiner);
-    tag.expand
-  end                            
-
-  desc %{
-    Usage:
-    <pre><code><r:gallery:keywords:each /></code></pre>
-    Loops over each keywords for current and children galleries }
-  tag "gallery:keywords:each" do |tag|
-    content =''
-    gallery = tag.locals.gallery
-    gallery.gallery_keywords.uniq.each do |key|
-      tag.locals.uniq_keywords = key
-      content << tag.expand
-    end
-    content
-  end 
-  
-  desc %{
-    Usage:
-    <pre><code><r:gallery:keywords:keyword [safe='true']/></code></pre>
-    Get the keyword of the current gallery:keywords loop } 
-  tag 'gallery:keywords:keyword' do |tag|
-    gallery_keyword = tag.locals.uniq_keywords
-    keys = gallery_keyword.keyword
-    keys = keys.gsub(/[\s]+/, '_').downcase if (tag.attr['safe'])
-    keys
-  end
-       
-  desc %{
-    Usage:
-    <pre><code><r:gallery:keywords:link [*options]/></code></pre>
-    Get the keyword and creates a link for the current gallery:keywords loop 
-    options are rendered inline as key:value pairs i.e. class='' id='', etc.}    
-  tag 'gallery:keywords:link' do |tag|
-    keyword = tag.locals.uniq_keywords ? tag.locals.uniq_keywords.keyword : tag.locals.gallery.keywords
-    options = tag.attr.dup
-    attributes = options.inject('') { |s, (k, v)| s << %{#{k.downcase}="#{v}" } }.strip
-    attributes = " #{attributes}" unless attributes.empty?
-    text = tag.double? ? tag.expand : tag.render('name')  
-    gallery_url = File.join(tag.render('url'))
-    %{<a href="#{gallery_url[0..-2]}?keywords=#{keyword.gsub(/[\s]+/, '_')}"#{attributes}>#{keyword}</a>}
-  end
-  
-  desc %{                 
-    Usage:
-    <pre><code><r:gallery:keywords [separator=',' safe='true']/></code></pre>
-    Provides keywords for current and children galleries, use
-    separator="separator_string" to specify the character between keywords }
-  tag "gallery:keywords" do |tag|
-    gallery = tag.locals.gallery    
-    joiner = tag.attr['separator'] ? tag.attr['separator'] : ' ' 
-    keys = gallery.keywords
-    keys = keys.gsub(/[\s]+/, '_').downcase if (tag.attr['safe'])
-    keys.gsub(/\,/, joiner);
-    tag.expand
-  end                            
-
-  desc %{
-    Usage:
-    <pre><code><r:gallery:keywords:each /></code></pre>
-    Loops over each keywords for current and children galleries }
-  tag "gallery:keywords:each" do |tag|
-    content =''
-    gallery = tag.locals.gallery
-    gallery.gallery_keywords.uniq.each do |key|
-      tag.locals.uniq_keywords = key
-      content << tag.expand
-    end
-    content
-  end 
-  
-  desc %{
-    Usage:
-    <pre><code><r:gallery:keywords:keyword [safe='true']/></code></pre>
-    Get the keyword of the current gallery:keywords loop } 
-  tag 'gallery:keywords:keyword' do |tag|
-    gallery_keyword = tag.locals.uniq_keywords
-    keys = gallery_keyword.keyword
-    keys = keys.gsub(/[\s]+/, '_').downcase if (tag.attr['safe'])
-    keys
-  end
-       
-  desc %{
-    Usage:
-    <pre><code><r:gallery:keywords:link [*options]/></code></pre>
-    Get the keyword and creates a link for the current gallery:keywords loop 
-    options are rendered inline as key:value pairs i.e. class='' id='', etc.}    
-  tag 'gallery:keywords:link' do |tag|
-    keyword = tag.locals.uniq_keywords ? tag.locals.uniq_keywords.keyword : tag.locals.gallery.keywords
-    options = tag.attr.dup
-    attributes = options.inject('') { |s, (k, v)| s << %{#{k.downcase}="#{v}" } }.strip
-    attributes = " #{attributes}" unless attributes.empty?
-    text = tag.double? ? tag.expand : tag.render('name')  
-    gallery_url = File.join(tag.render('url'))
-    %{<a href="#{gallery_url[0..-2]}?keywords=#{keyword.gsub(/[\s]+/, '_')}"#{attributes}>#{keyword}</a>}
   end
   
   tag 'gallery:breadcrumbs' do |tag|
